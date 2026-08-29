@@ -316,17 +316,42 @@ function sortStreams(list,kind,reverse){
 var PQ=[4320,2160,1440,1080,720,480,360,240,144];
 function nearest(u){ for(var i=0;i<PQ.length;i++) if(PQ[i]<=u) return PQ[i]; return 144; }
 
+var autoRetried=0;
+async function oembedInfo(id){
+  try{
+    var j=await fetchJson('https://www.youtube.com/oembed?url='+encodeURIComponent('https://www.youtube.com/watch?v='+id)+'&format=json');
+    return {title:j.title, author:j.author_name, thumb:j.thumbnail_url};
+  }catch(e){ log('w','oembed failed: '+e.message); return {title:id, author:'', thumb:'https://i.ytimg.com/vi/'+id+'/hqdefault.jpg'}; }
+}
+function isBlockErr(m){
+  return /SignInConfirmNotBot|blocked anonymous|not a bot|bot confirmation/i.test(m||'');
+}
 async function detectYouTube(url){
   var id=ytId(url); if(!id){ return {ok:false, err:'Could not parse YouTube video id'}; }
-  log('t','youtube id '+id+' via piped');
+  log('t','youtube id '+id);
+  // metadata selalu via oEmbed agar thumbnail+judul muncul walau stream diblokir
+  var meta=await oembedInfo(id);
+  state.meta=meta;
   var last=null;
   for(var i=0;i<PIPED.length;i++){
     try{
-      var s=await pipedStreams(id, PIPED[i]); state.pipedData=s; state.pipedInst=PIPED[i];
-      return {ok:true}; // thumb & streams read in render
+      var s=await pipedStreams(id, PIPED[i]);
+      if(!(s.videoStreams||[]).length && !(s.audioStreams||[]).length) throw new Error('no streams');
+      state.pipedData=s; state.pipedInst=PIPED[i]; state.streamErr=null;
+      return {ok:true, meta:meta};
     }catch(e){ last=e; log('e','piped '+PIPED[i].name+': '+e.message); }
   }
-  return {ok:false, err: last?last.message:'All Piped instances failed'};
+  state.pipedData=null; state.streamErr= last?last.message:'All Piped instances failed';
+  // auto retry sekali: blokir anonim YouTube biasanya temporer (1-2 menit)
+  if(isBlockErr(last&&last.message) && autoRetried<2){
+    autoRetried++;
+    log('w','YouTube blocked anonymous access — auto retry in 15s ('+autoRetried+'/2)');
+    setTimeout(function(){
+      var cur=lastLink();
+      if(cur && cur===state.url){ handleLink(true); }
+    },15000);
+  }
+  return {ok:true, meta:meta, streamOk:false, err:state.streamErr};
 }
 
 function renderChoices(){
@@ -347,6 +372,14 @@ function renderChoices(){
 
   // Foto: YouTube tidak punya foto, tapi untuk IG/TikTok beberapa ada. Untuk youtube, tawarkan jika ada thumbnail-large only.
   if(platformOf(state.url)==='youtube'){
+    if(!s || !(s.videoStreams||[]).length){
+      // streams belum tersedia (blokir temporer) — tampilkan status + retry
+      var d=document.createElement('div'); d.className='hint';
+      d.innerHTML='Stream YouTube sedang diblokir untuk akses anonim (blokir temporer).<br>Menunggu retry otomatis atau tekan tombol di bawah.';
+      box.appendChild(d);
+      state.choice=null; updateGetBtn();
+      return;
+    }
     // Only offer streams whose URL is directly downloadable via the Piped proxy
     // (player.odycdn etc. is not CORS-friendly). Group unique proxied MP4 heights.
     var proxVideo=vs.filter(function(x){return isProxied(x) && (x.mimeType||'').indexOf('video/')===0;});
@@ -377,8 +410,13 @@ function renderChoices(){
 }
 function updateGetBtn(){
   var b=document.getElementById('getbtn');
-  b.disabled = !state.choice || !state.choice.type;
-  b.textContent = '⬇ Download '+(state.choice&&state.choice.height?(' '+state.choice.height+'p'):(state.choice&&state.choice.type==='mp3'?' MP3':''));
+  var blocked = state.platform==='youtube' && !(state.pipedData&&(state.pipedData.videoStreams||[]).length) && !(state.pipedData&&(state.pipedData.audioStreams||[]).length);
+  b.disabled = blocked || !state.choice || !state.choice.type;
+  if(blocked){ b.textContent='↻ Retry (streams blocked)'; b.onclick=function(){ handleLink(); }; }
+  else {
+    b.onclick=startDownload;
+    b.textContent = '⬇ Download '+(state.choice&&state.choice.height?(' '+state.choice.height+'p'):(state.choice&&state.choice.type==='mp3'?' MP3':''));
+  }
 }
 
 async function handleLink(){
@@ -403,12 +441,11 @@ async function detectPlatform(url){
   if(state.platform==='youtube'){
     var r=await detectYouTube(url);
     if(!r.ok) return r;
-    var s=state.pipedData;
-    var thumb='';
-    if(s.thumbnailUrl) thumb=s.thumbnailUrl;
-    else if(s.thumbnails&&s.thumbnails.length) thumb=s.thumbnails.map(function(t){return t.url;}).pop();
-    var dur=s.duration&&s.duration>0? Math.floor(s.duration/60)+':'+('0'+(s.duration%60)).slice(-2) : '';
-    return {ok:true, thumb:thumb, title:s.title||ytId(url), meta:'YouTube · '+dur};
+    var m=state.meta||{};
+    var sub=[];
+    if(m.author) sub.push(m.author);
+    if(state.streamErr) sub.push('streams blocked, retrying…');
+    return {ok:true, thumb:m.thumb||'', title:m.title||ytId(url), meta:'YouTube · '+sub.join(' · ')};
   }
   // non-YouTube: no reliable preview API; show generic card
   var name=state.platform.charAt(0).toUpperCase()+state.platform.slice(1);
