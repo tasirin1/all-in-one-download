@@ -1,0 +1,12 @@
+{
+  "name": "All In One Download",
+  "short_name": "AllInOne",
+  "description": "Download videos from YouTube, TikTok, Instagram, Twitter/X, Reddit and more.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "icons": [
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
+  ]
+}

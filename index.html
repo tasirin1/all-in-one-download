@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All In One Download — Video Downloader</title>
+<meta name="description" content="Download videos from YouTube, TikTok, Instagram, Twitter/X, Reddit and more. All in one downloader.">
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a24; --panel2:#1e2230; --border:#2a2f42;
+    --text:#e8eaf2; --muted:#9aa1b5; --accent:#5b8cff; --accent2:#7c5bff;
+    --ok:#3ecf8e; --err:#ff5c66; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,#1c2236 0%,var(--bg) 60%);
+    color:var(--text); min-height:100vh; line-height:1.5;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:28px 18px 80px}
+  header{text-align:center;padding:12px 0 26px}
+  .logo{font-size:30px;font-weight:800;letter-spacing:-.5px}
+  .logo span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{color:var(--muted);font-size:14px;margin-top:6px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:600}
+  textarea,select,button,input{font:inherit;color:var(--text)}
+  textarea{
+    width:100%;min-height:84px;background:var(--panel2);border:1px solid var(--border);
+    border-radius:10px;padding:12px 14px;resize:vertical;
+  }
+  textarea:focus{outline:none;border-color:var(--accent)}
+  .row{display:flex;gap:10px;margin-top:12px}
+  .row select{flex:0 0 auto;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .row button{
+    flex:1;background:linear-gradient(90deg,var(--accent),var(--accent2));border:0;
+    border-radius:10px;padding:12px;font-weight:700;cursor:pointer;color:#fff;
+  }
+  .row button:disabled{opacity:.6;cursor:not-allowed}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+  .hint code{background:var(--panel2);padding:1px 6px;border-radius:6px}
+  .status{padding:12px 14px;border-radius:10px;margin-top:12px;display:none;font-size:14px}
+  .status.show{display:block}
+  .status.err{background:rgba(255,92,102,.12);border:1px solid rgba(255,92,102,.4);color:var(--err)}
+  .status.wait{background:rgba(91,140,255,.08);border:1px solid rgba(91,140,255,.35);color:var(--accent)}
+  .status.ok{background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.4);color:var(--ok)}
+  .result{display:none;margin-top:14px}
+  .result.show{display:block}
+  .pres{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;color:var(--muted);word-break:break-all;margin-bottom:10px}
+  .actions{display:flex;gap:10px}
+  .actions a,.actions button{
+    flex:1;text-align:center;background:var(--ok);color:#042;text-decoration:none;
+    border:0;border-radius:10px;padding:12px;font-weight:700;cursor:pointer
+  }
+  .actions button.cp{background:var(--panel2);border:1px solid var(--border);color:var(--text)}
+  .list{margin-top:16px;display:none}
+  .list.show{display:block}
+  .item{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);
+        border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .item .meta{flex:1;min-width:0}
+  .item .t{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .d{font-size:11px;color:var(--muted)}
+  .item a{background:var(--ok);color:#042;text-decoration:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;flex:0 0 auto}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:26px}
+  footer a{color:var(--accent);text-decoration:none}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">All In One <span>Download</span></div>
+    <div class="tag">YouTube • TikTok • Instagram • Twitter/X • Reddit • &amp; more</div>
+  </header>
+
+  <div class="card">
+    <label for="links">Paste link(s) — satu atau banyak, pisahkan dengan baris baru / koma</label>
+    <textarea id="links" placeholder="https://www.youtube.com/watch?v=...&#10;https://www.tiktok.com/@user/video/...&#10;https://www.instagram.com/reel/..."></textarea>
+    <div class="row">
+      <select id="format">
+        <option value="auto">Auto (best)</option>
+        <option value="mp4">MP4 video only</option>
+        <option value="mp3">MP3 audio only</option>
+        <option value="webm">WebM</option>
+      </select>
+      <button id="go" onclick="start()">Download</button>
+    </div>
+    <div class="hint">Backend: open Cobalt API. Works best with public YouTube/TikTok/IG/Reddit links. <code>auto</code> keeps original container &amp; quality.</div>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <div id="result" class="result">
+    <div class="pres" id="pres"></div>
+    <div class="actions">
+      <a id="dl" href="#" download target="_blank" rel="noopener">⬇ Download file</a>
+      <button class="cp" onclick="copyResult()">Copy URL</button>
+    </div>
+  </div>
+
+  <div id="list" class="list">
+    <div class="card" style="margin-bottom:10px">
+      <label>Batch results</label>
+    </div>
+    <div id="items"></div>
+  </div>
+
+  <footer>
+    Progressive Web App — <span id="apiname"></span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+// Cobalt API backend instances (CORS-enabled). Tried in order; first that
+// responds wins. You can extend this list with your own self-hosted instance.
+var INSTANCES = [
+  { name: "cobalt.tools", url: "https://api.downloader.mispy.me" },
+  { name: "cobalt misc",   url: "https://cobalt-api.kwiatekmiki.com" },
+  { name: "cobalt.tools", url: "https://api.cobalt.tools" }
+];
+
+var goBtn = document.getElementById('go');
+var statusEl = document.getElementById('status');
+var resultEl = document.getElementById('result');
+var listEl = document.getElementById('list');
+
+function setStatus(msg, kind, spin){
+  statusEl.className = 'status show ' + (kind||'wait');
+  statusEl.innerHTML = (spin?'<span class="spinner"></span>':'') + escapeHtml(msg);
+  if(kind==='ok'||kind==='err') resultEl.classList.remove('show');
+}
+function clearStatus(){ statusEl.className='status'; }
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+function extractLinks(){
+  var raw=document.getElementById('links').value;
+  var m=raw.match(/https?:\/\/[^\s,]+/g)||[];
+  // trim trailing punctuation
+  return m.map(function(u){return u.replace(/[),.;!?]+$/,'');});
+}
+
+async function tryInstance(inst, payload){
+  var ctrl=new AbortController();
+  var to=setTimeout(function(){ctrl.abort();},20000);
+  try{
+    var res=await fetch(inst.url+'/api/json',{
+      method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    clearTimeout(to);
+    if(!res.ok){ var t=await res.text().catch(function(){return '';}); throw new Error('HTTP '+res.status+' '+(t||'').slice(0,120)); }
+    return await res.json();
+  }catch(e){ clearTimeout(to); throw e; }
+}
+
+async function getJson(url, payload){
+  var lastErr=null;
+  for(var i=0;i<INSTANCES.length;i++){
+    try{
+      return await tryInstance(INSTANCES[i],payload);
+    }catch(e){ lastErr=e; console.warn(INSTANCES[i].name,'failed',e); }
+  }
+  throw lastErr||new Error('All API instances failed');
+}
+
+async function one(url, fmt){
+  var payload={url:url};
+  if(fmt==='mp4') payload.downloadMode='video';
+  else if(fmt==='mp3') payload.downloadMode='audio';
+  else if(fmt==='webm') payload.downloadMode='video'; // keep webm; client may re-process
+  var j=await getJson(url,payload);
+  if(!j || (!j.url && !j.status)) throw new Error('Unexpected API response');
+  if(j.url) return {url:j.url, filename:j.filename||null, title:j.title||null};
+  if(j.status==='redirect') return {url:j.url||j.redirect||'', filename:j.filename||null};
+  throw new Error('API did not return a download URL');
+}
+
+async function start(){
+  var links=extractLinks();
+  if(!links.length){ setStatus('Paste at least one valid link.','err'); return; }
+  var fmt=document.getElementById('format').value;
+  goBtn.disabled=true; resultEl.classList.remove('show'); listEl.classList.remove('show');
+  document.getElementById('items').innerHTML='';
+  setStatus('Processing '+links.length+' link(s)...','wait',true);
+
+  var results=[];
+  for(var i=0;i<links.length;i++){
+    setStatus('('+(i+1)+'/'+links.length+') Fetching '+links[i],'wait',true);
+    try{
+      var r=await one(links[i],fmt);
+      r.input=links[i];
+      results.push(r);
+    }catch(e){
+      setStatus('Failed: '+links[i]+' — '+e.message,'err');
+      console.error(e);
+    }
+  }
+  goBtn.disabled=false;
+  if(!results.length){ return; }
+
+  if(results.length===1){
+    var r0=results[0];
+    var url=r0.url;
+    // only set download attr for same-origin/blob; cross-origin download uses blob proxy note
+    var dl=document.getElementById('dl');
+    dl.href=url;
+    dl.setAttribute('download', r0.filename||'video');
+    // cross-origin: fetch via proxy-ish (cobalt returns CORS-enabled URL so direct fetch works)
+    try{
+      var blob=await (await fetch(url)).blob();
+      dl.href=URL.createObjectURL(blob);
+    }catch(e){ /* keep raw URL; anchor opens in new tab */ }
+    document.getElementById('pres').textContent=(r0.title?('Title: '+r0.title+'\n'):'')+url;
+    resultEl.classList.add('show');
+    setStatus('Done!','ok');
+  } else {
+    listEl.classList.add('show');
+    renderList(results);
+    setStatus(results.length+'/'+links.length+' ready','ok');
+  }
+}
+
+function renderList(results){
+  var box=document.getElementById('items'); box.innerHTML='';
+  results.forEach(function(r){
+    var it=document.createElement('div'); it.className='item';
+    var m=document.createElement('div'); m.className='meta';
+    var t=document.createElement('div'); t.className='t'; t.textContent=(r.title||r.filename||r.input);
+    var d=document.createElement('div'); d.className='d'; d.textContent=r.input;
+    m.appendChild(t); m.appendChild(d);
+    var a=document.createElement('a'); a.textContent='⬇'; a.href=r.url; a.target='_blank'; a.rel='noopener';
+    a.setAttribute('download',r.filename||'video');
+    it.appendChild(m); it.appendChild(a);
+    box.appendChild(it);
+  });
+}
+
+function copyResult(){
+  var txt=document.getElementById('pres').textContent||'';
+  var lastLine=(txt.split('\n').pop()||'').trim();
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(lastLine).then(function(){flash('Copied!');});}
+  else{ flash('Select & copy manually.'); }
+}
+function flash(msg){ setStatus(msg,'ok'); }
+
+document.getElementById('links').addEventListener('input',clearStatus);
+document.getElementById('apiname').textContent='Powered by '+INSTANCES[0].name+' & open alternatives';
+</script>
+</body>
+</html>
