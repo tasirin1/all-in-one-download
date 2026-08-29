@@ -38,6 +38,7 @@
     border-radius:10px;padding:12px;font-weight:700;cursor:pointer;color:#fff;
   }
   .row button:disabled{opacity:.6;cursor:not-allowed}
+  .row button.ghost{background:var(--panel2);border:1px solid var(--border);color:var(--text);flex:0 0 auto}
   .hint{font-size:12px;color:var(--muted);margin-top:8px}
   .hint code{background:var(--panel2);padding:1px 6px;border-radius:6px}
   .status{padding:12px 14px;border-radius:10px;margin-top:12px;display:none;font-size:14px;white-space:pre-wrap}
@@ -125,7 +126,11 @@
   <div class="card">
     <label for="links">Paste link — otomatis terdeteksi saat ditempel</label>
     <textarea id="links" placeholder="https://www.youtube.com/watch?v=...&#10;https://www.tiktok.com/@user/video/...&#10;https://www.instagram.com/reel/..."></textarea>
-    <div class="hint">Tempel satu URL; pilihan foto/video/resolusi muncul otomatis. Pisahkan beberapa URL dengan baris baru.</div>
+    <div class="row" style="margin-top:10px">
+      <button id="sendbtn" onclick="sendLink()">Kirim</button>
+      <button id="clrbtn" class="ghost" onclick="clearAll()">Hapus</button>
+    </div>
+    <div class="hint">Tempel satu URL lalu tekan <b>Kirim</b> — pilihan foto/video/resolusi muncul otomatis. Enter juga bisa.</div>
   </div>
 
   <div id="status" class="status"></div>
@@ -571,6 +576,16 @@ function copyResult(){
   else flash('Select & copy manually.');
 }
 
+function sendLink(){
+  clearStatus(); handleLink();
+}
+function clearAll(){
+  document.getElementById('links').value='';
+  resultEl.classList.remove('show'); listEl.classList.remove('show'); previewEl.classList.remove('show');
+  clearStatus(); logEls=[]; document.getElementById('pchoices').innerHTML='';
+  state.url=null; state.pipedData=null; state.tikData=null; state.choice=null;
+  document.getElementById('links').focus();
+}
 document.getElementById('links').addEventListener('input', function(){ clearStatus(); });
 document.getElementById('links').addEventListener('change', handleLink);
 document.getElementById('links').addEventListener('paste', function(){ setTimeout(handleLink,50); });
