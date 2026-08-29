@@ -38,6 +38,15 @@ The site logs every step to an on-page log and to `console`.
 | `Non-YouTube requires a Cobalt instance` | TikTok/IG/etc. need Cobalt backend, none configured | Self-host Cobalt, paste URL in Advanced |
 | `picker (multi-source) not supported` | Cobalt returned a multi-source picker | Not yet supported in UI |
 
+## Error reporting to GitHub
+The site catches errors automatically (global JS errors, unhandled promise rejections, download/detection failures) and can file them as **GitHub Issues** so you get notified fast.
+
+- **With PAT (auto-report):** get a fine-grained personal access token with **Issues: write** on this repo only (GitHub → Settings → Developer settings → Fine-grained tokens). Paste it in the site → *Advanced → Error reporting → Save token*. It is kept **only in your browser** (`localStorage`), never committed. Every new error then POSTs to the Issues API automatically and creates an issue with the full debug log.
+- **Without PAT:** use the **Report error** button (result card / Advanced) — it opens a GitHub issue form pre-filled with the debug log (works for anyone, no token needed).
+- Anti-spam: identical errors are only reported once per 30 minutes; see `index.html` → `REPO_OWNER`/`REPO_NAME` if you fork.
+
+> ⚠️ Security: a browser-side PAT can be seen by anyone using the site and restricted to Issues-write on this repo reduces—but does not eliminate—risk. For a public site you may prefer the manual Report button only; remove `auto` reporting by not saving a token.
+
 ## Self-host backends
 - **Cobalt**: `docker run ghcr.io/imputnet/cobalt:latest` (see [docs/run-an-instance.md](https://github.com/imputnet/cobalt/blob/main/docs/run-an-instance.md)) — then paste `https://your-host` in Advanced (leave `/` off).
 - **Piped**: [TeamPiped/Piped](https://github.com/TeamPiped/Piped) — set `PIPED` in `index.html`.

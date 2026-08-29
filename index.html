@@ -149,6 +149,7 @@
       <a id="dl" href="#" download target="_blank" rel="noopener">⬇ Download file</a>
       <button class="cp" onclick="copyResult()">Copy URL</button>
       <button class="db" onclick="openDebug()">Debug</button>
+      <button class="db" onclick="reportNow()">Report error</button>
     </div>
   </div>
 
@@ -164,6 +165,23 @@
       sini — lihat <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener">imputnet/cobalt</a>.
       YouTube tetap jalan via Piped tanpa setup.
       <a href="#" onclick="checkInstances();return false;">Test semua instance</a>
+    </div>
+  </details>
+
+  <details class="adv">
+    <summary>Error reporting to GitHub</summary>
+    <label for="pat">Fine-grained PAT (Issues: write, repo ini saja) — disimpan hanya di browser ini</label>
+    <input id="pat" type="password" placeholder="github_pat_... (opsional; auto-report error jadi Issue)">
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button style="flex:1;min-width:110px" onclick="savePat()">Save token</button>
+      <button style="flex:1;min-width:110px;background:var(--panel2);border:1px solid var(--border);color:var(--text)" onclick="reportNow()">Report last errors</button>
+    </div>
+    <div class="hint" style="margin-top:8px">
+      Tanpa token tetap bisa: tombol <b>Report</b> membuka form Issue GitHub berisi log otomatis.
+      Dengan token, error terdeteksi otomatis (global error/network/download) langsung dibuatkan Issue
+      — lihat <a href="https://github.com/tasirin1/all-in-one-download/issues" target="_blank" rel="noopener">issues</a>.
+      Token dipakai di browser tapi <b>tidak pernah masuk kode/commit</b>. Gunakan fine-grained PAT
+      ber-scope <code>Issues: write</code> untuk repo ini saja.
     </div>
   </details>
 
@@ -482,6 +500,104 @@ async function checkInstances(){
   for(var i=0;i<all.length;i++){ try{ var r=await fetch(all[i].url,{headers:{'Accept':'application/json'}}); log('o',all[i].name+' OK HTTP '+r.status); }catch(e){ log('e',all[i].name+' unreachable: '+e.message); } }
   setStatus('Test done — see Debug log.','ok'); openDebug();
 }
+
+/* ================= error reporting to GitHub ================= */
+var REPO_OWNER='tasirin1', REPO_NAME='all-in-one-download';
+var GH='https://api.github.com';
+
+function loadPat(){ try{ return localStorage.getItem('aiod-pat')||'' }catch(e){ return '' } }
+var PAT=loadPat();
+var reported={}; // dedupe by error signature, near past
+
+function fmtReport(){
+  // build a compact, readable report body from the debug log + latest errors
+  var lines=[];
+  lines.push('**Source:** '+location.href);
+  lines.push('**Time:** '+new Date().toISOString());
+  lines.push('**UserAgent:** '+(navigator.userAgent||''));
+  lines.push('');
+  lines.push('**Debug log:**');
+  (logEls||[]).forEach(function(e){ lines.push('`['+e.k+'] '+e.t+'` '+e.m); });
+  if(!(logEls||[]).length) lines.push('(log kosong)');
+  return lines.join('\n');
+}
+function sigOf(msg){
+  // normalize: drop timestamps & dynamic pieces to group same errors
+  return String(msg).replace(/\d+/g,'#').slice(0,120);
+}
+function setPatField(){ document.getElementById('pat').value=PAT; }
+function savePat(){
+  PAT=document.getElementById('pat').value.trim();
+  try{ localStorage.setItem('aiod-pat',PAT); }catch(e){}
+  flash(PAT?'Token saved (local only)':'Token cleared');
+}
+async function postIssue(title, body){
+  var res=await fetch(GH+'/repos/'+REPO_OWNER+'/'+REPO_NAME+'/issues',{
+    method:'POST',
+    headers:{'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28','Authorization':'Bearer '+PAT},
+    body:JSON.stringify({title:title, body:body, labels:['auto-report']})
+  });
+  if(!res.ok){
+    var t=await res.text().catch(function(){return '';});
+    var m=t; try{ m=JSON.parse(t).message||m }catch(e){}
+    throw new Error('GitHub reported '+(m||res.status));
+  }
+  return res.json();
+}
+function buildTitle(msg){
+  var p=state&&state.platform?state.platform.toUpperCase():'';
+  var pre=p? '['+p+'] ':'';
+  if(!msg) return pre+'Error reported by user';
+  var head=String(msg).split('\n')[0].trim();
+  return (pre+head).slice(0,200)||pre+'Error reported';
+}
+async function reportOnce(msg, force, silent){
+  if(!PAT){
+    // no token: never auto-open tabs; only explicit user action (reportNow) opens the form
+    if(force) openManualReport(msg);
+    return;
+  }
+  var sig=sigOf(msg||'manual');
+  var now=Date.now();
+  if(!force && reported[sig] && now-reported[sig]<30*60*1000){
+    flash('Already reported recently'); return;
+  }
+  reported[sig]=now;
+  try{
+    setStatus('Reporting to GitHub...','wait',true);
+    var title=buildTitle(msg);
+    var body=fmtReport();
+    var r=await postIssue(title,body);
+    setStatus('Reported → issue #'+r.number,'ok'); log('o','created issue #'+r.number);
+  }catch(e){
+    log('e','report failed: '+e.message);
+    setStatus('Auto-report failed ('+e.message+'). Use Report to open the form.','err');
+    openManualReport(msg);
+  }
+}
+function openManualReport(msg){
+  // open a new GitHub issue form pre-filled with the report
+  var t=buildTitle(msg||'');
+  var body=fmtReport();
+  var url='https://github.com/'+REPO_OWNER+'/'+REPO_NAME+'/issues/new?title='+encodeURIComponent(t)+'&body='+encodeURIComponent(body);
+  window.open(url,'_blank');
+}
+function reportNow(){ reportOnce(null,true); }
+
+// capture global JS / promise / resource errors
+window.addEventListener('error', function(e){
+  var m=(e.message||'')+(e.filename?(' @ '+e.filename+':'+e.lineno):'');
+  log('e','global error: '+m);
+  reportOnce('Global error: '+m, false, true);
+});
+window.addEventListener('unhandledrejection', function(e){
+  var m=(e.reason&&e.reason.message)?e.reason.message:String(e.reason||'unhandled rejection');
+  log('e','unhandled: '+m);
+  reportOnce('Unhandled rejection: '+m, false, true);
+});
+
+// init PAT field
+setPatField();
 
 renderBadges(); log('t','app loaded');
 </script>
