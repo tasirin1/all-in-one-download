@@ -3,33 +3,57 @@
 Download videos & audio from **YouTube, TikTok, Instagram, Twitter/X, Reddit, and many more** — directly in your browser. Free, no install, works on mobile & desktop.
 
 ## Live site
-Deployed to GitHub Pages via Actions.
+Deployed to GitHub Pages via Actions → https://tasirin1.github.io/all-in-one-download
 
 ## How it works
-This is a **static frontend** (no server) that talks to the **Cobalt API** (open, CORS-enabled instances). You paste link(s), the page returns a direct download URL / file.
-
-Backend instances are tried in order; the first that responds is used. You can self-host your own Cobalt instance and add it to `INSTANCES` in `index.html`.
+- **Detection first, options after** (same flow as Tasirin Download Manager): paste a link → the app detects the platform → shows a preview card with thumbnail + title + choices (photo / video / resolution, e.g. 1080p/720p/... or MP3) → tap Download.
+- Backend is a **static frontend** (no server):
+  - **YouTube**: Piped API (`/streams/{id}`) — picks a directly downloadable proxied MP4 stream (verified CORS `*`). Out of the box, no setup.
+  - **Other platforms** (TikTok/IG/Twitter/Reddit/...): **Cobalt API v10**. Public CORS instances are almost all dead/shut down as of 2026; paste your own self-hosted instance URL in **Advanced** (see [imputnet/cobalt](https://github.com/imputnet/cobalt)).
 
 ## Features
-- Paste one link or many (newline / comma separated) for batch download
-- Quality mode: Auto (best) / MP4 / MP3 / WebM
+- Paste URL → auto-detect → thumbnail + title preview + format/resolution chips
+- Single or multiple links (newline separated)
+- Mode chips: video resolution (e.g. 1080p MP4), MP3 audio only, video without audio
 - Download file in browser or copy the direct URL
-- PWA installable, offline shell
-- Lightweight single-file frontend, no build step
+- PWA installable, offline shell, light (single-file frontend)
+- **Debug log panel**: footer → *Debug log*, or the *Debug* button on results. Every request/response/error is logged; use *Copy log* to share.
+
+## Debugging
+The site logs every step to an on-page log and to `console`.
+
+1. Open the site, paste a link. If detection fails, the error appears in the red status box.
+2. Open **Debug log** (footer) → read the timeline:
+   - `youtube id ... via piped` — which backend was used
+   - `piped <name>: HTTP ...` — HTTP errors
+   - `blob fetch failed ...` — when the media URL can't be fetched cross-origin (it still opens in a new tab)
+3. For full network detail: browser DevTools (**F12**) → **Console** (our `console.warn`/`console.error` appear) and **Network** tab (check the `streams/` request and the media `videoplayback` response status).
+4. **Test all instances**: Advanced → *Test all instances* — pings each Piped/Cobalt backend and marks reachable/unreachable in the log.
+
+### Common errors
+| Symptom | Cause | Fix |
+|---|---|---|
+| `piped ... HTTP 500/502/timeout` | Public Piped instance down/rate-limited | Retry; fallback instance is tried automatically |
+| `Could not detect: All Piped instances failed` | No Piped instance reachable | Try later or use your own Piped instance |
+| `Non-YouTube requires a Cobalt instance` | TikTok/IG/etc. need Cobalt backend, none configured | Self-host Cobalt, paste URL in Advanced |
+| `picker (multi-source) not supported` | Cobalt returned a multi-source picker | Not yet supported in UI |
+
+## Self-host backends
+- **Cobalt**: `docker run ghcr.io/imputnet/cobalt:latest` (see [docs/run-an-instance.md](https://github.com/imputnet/cobalt/blob/main/docs/run-an-instance.md)) — then paste `https://your-host` in Advanced (leave `/` off).
+- **Piped**: [TeamPiped/Piped](https://github.com/TeamPiped/Piped) — set `PIPED` in `index.html`.
 
 ## Run locally
-Serve the folder with any static server, e.g.:
 ```
 python3 -m http.server 8080
 ```
-Then open http://localhost:8080
+Open http://localhost:8080
 
 ## Deploy on your own GitHub
 1. Fork this repo.
-2. Enable GitHub Pages → Source: **GitHub Actions**.
-3. Push to `main`; the Pages workflow builds and deploys automatically.
+2. GitHub Pages → Source: **GitHub Actions**.
+3. Push to `main`; the Pages workflow deploys automatically.
 
 ## Notes / limitations
 - Public instances can be rate-limited or go down; fallback instances are included.
-- Some platforms block or require authentication for certain videos; results depend on API availability.
+- Some platforms block or require authentication for certain media.
 - Hosting a downloader for copyrighted content may violate platform terms — use responsibly.

@@ -9,7 +9,7 @@
   :root{
     --bg:#0f1117; --panel:#171a24; --panel2:#1e2230; --border:#2a2f42;
     --text:#e8eaf2; --muted:#9aa1b5; --accent:#5b8cff; --accent2:#7c5bff;
-    --ok:#3ecf8e; --err:#ff5c66; --radius:14px;
+    --ok:#3ecf8e; --err:#ff5c66; --warn:#ffb84d; --radius:14px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -19,7 +19,7 @@
     color:var(--text); min-height:100vh; line-height:1.5;
   }
   .wrap{max-width:680px;margin:0 auto;padding:28px 18px 80px}
-  header{text-align:center;padding:12px 0 26px}
+  header{text-align:center;padding:12px 0 22px}
   .logo{font-size:30px;font-weight:800;letter-spacing:-.5px}
   .logo span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
   .tag{color:var(--muted);font-size:14px;margin-top:6px}
@@ -27,33 +27,56 @@
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:600}
   textarea,select,button,input{font:inherit;color:var(--text)}
   textarea{
-    width:100%;min-height:84px;background:var(--panel2);border:1px solid var(--border);
+    width:100%;min-height:64px;background:var(--panel2);border:1px solid var(--border);
     border-radius:10px;padding:12px 14px;resize:vertical;
   }
-  textarea:focus{outline:none;border-color:var(--accent)}
-  .row{display:flex;gap:10px;margin-top:12px}
+  textarea:focus,input:focus{outline:none;border-color:var(--accent)}
+  .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   .row select{flex:0 0 auto;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
   .row button{
-    flex:1;background:linear-gradient(90deg,var(--accent),var(--accent2));border:0;
+    flex:1;min-width:120px;background:linear-gradient(90deg,var(--accent),var(--accent2));border:0;
     border-radius:10px;padding:12px;font-weight:700;cursor:pointer;color:#fff;
   }
   .row button:disabled{opacity:.6;cursor:not-allowed}
   .hint{font-size:12px;color:var(--muted);margin-top:8px}
   .hint code{background:var(--panel2);padding:1px 6px;border-radius:6px}
-  .status{padding:12px 14px;border-radius:10px;margin-top:12px;display:none;font-size:14px}
+  .status{padding:12px 14px;border-radius:10px;margin-top:12px;display:none;font-size:14px;white-space:pre-wrap}
   .status.show{display:block}
   .status.err{background:rgba(255,92,102,.12);border:1px solid rgba(255,92,102,.4);color:var(--err)}
   .status.wait{background:rgba(91,140,255,.08);border:1px solid rgba(91,140,255,.35);color:var(--accent)}
   .status.ok{background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.4);color:var(--ok)}
+  /* preview card */
+  .preview{display:none;margin-top:14px}
+  .preview.show{display:block}
+  .prev-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--panel2);display:block}
+  .prev-body{padding:14px 16px}
+  .prev-title{font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3}
+  .prev-meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+  .opt-label{font-size:12px;color:var(--muted);font-weight:600;margin:12px 0 6px}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opt{
+    background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;
+    cursor:pointer;font-size:13px;color:var(--text);display:flex;flex-direction:column;align-items:center;gap:2px;min-width:92px
+  }
+  .opt:hover{border-color:var(--accent)}
+  .opt.sel{border-color:var(--accent);background:rgba(91,140,255,.12)}
+  .opt .lbl{font-weight:700}
+  .opt .sub{font-size:10px;color:var(--muted)}
+  .btn{
+    display:block;width:100%;margin-top:14px;text-align:center;background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#fff;border:0;border-radius:10px;padding:13px;font-weight:700;cursor:pointer;font-size:15px
+  }
+  .btn:disabled{opacity:.6;cursor:not-allowed}
   .result{display:none;margin-top:14px}
   .result.show{display:block}
   .pres{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;color:var(--muted);word-break:break-all;margin-bottom:10px}
-  .actions{display:flex;gap:10px}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
   .actions a,.actions button{
-    flex:1;text-align:center;background:var(--ok);color:#042;text-decoration:none;
+    flex:1;min-width:120px;text-align:center;background:var(--ok);color:#042;text-decoration:none;
     border:0;border-radius:10px;padding:12px;font-weight:700;cursor:pointer
   }
-  .actions button.cp{background:var(--panel2);border:1px solid var(--border);color:var(--text)}
+  .actions button.cp,.actions button.db{background:var(--panel2);border:1px solid var(--border);color:var(--text)}
   .list{margin-top:16px;display:none}
   .list.show{display:block}
   .item{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);
@@ -62,11 +85,34 @@
   .item .t{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .item .d{font-size:11px;color:var(--muted)}
   .item a{background:var(--ok);color:#042;text-decoration:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;flex:0 0 auto}
+  details.adv{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-top:14px}
+  details.adv summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:600}
+  details.adv input{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px}
+  details.adv .badges{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+  .badge{font-size:11px;background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--muted)}
+  .badge.ok{color:var(--ok);border-color:rgba(62,207,142,.4)}
+  .badge.err{color:var(--err);border-color:rgba(255,92,102,.4)}
   footer{color:var(--muted);font-size:12px;text-align:center;margin-top:26px}
-  footer a{color:var(--accent);text-decoration:none}
+  footer a{color:var(--accent);text-decoration:none;cursor:pointer}
   .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);
     border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:20px}
+  .modal.show{display:flex}
+  .modal .box{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);max-width:760px;width:100%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .modal .hd b{font-size:15px}
+  .modal .hd button{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .modal .body{overflow:auto;padding:16px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .modal .body .line{border-bottom:1px dashed var(--border);padding:5px 0;word-break:break-all}
+  .modal .body .line.t{color:var(--muted)}
+  .modal .body .line.e{color:var(--err)}
+  .modal .body .line.o{color:var(--ok)}
+  .modal .body .line.w{color:var(--warn)}
+  .modal .ctl{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
+  .modal .ctl button{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;cursor:pointer}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:10px;font-size:13px;display:none;z-index:60}
+  .toast.show{display:block}
 </style>
 </head>
 <body>
@@ -77,178 +123,367 @@
   </header>
 
   <div class="card">
-    <label for="links">Paste link(s) — satu atau banyak, pisahkan dengan baris baru / koma</label>
+    <label for="links">Paste link — otomatis terdeteksi saat ditempel</label>
     <textarea id="links" placeholder="https://www.youtube.com/watch?v=...&#10;https://www.tiktok.com/@user/video/...&#10;https://www.instagram.com/reel/..."></textarea>
-    <div class="row">
-      <select id="format">
-        <option value="auto">Auto (best)</option>
-        <option value="mp4">MP4 video only</option>
-        <option value="mp3">MP3 audio only</option>
-        <option value="webm">WebM</option>
-      </select>
-      <button id="go" onclick="start()">Download</button>
-    </div>
-    <div class="hint">Backend: open Cobalt API. Works best with public YouTube/TikTok/IG/Reddit links. <code>auto</code> keeps original container &amp; quality.</div>
+    <div class="hint">Tempel satu URL; pilihan foto/video/resolusi muncul otomatis. Pisahkan beberapa URL dengan baris baru.</div>
   </div>
 
   <div id="status" class="status"></div>
+
+  <!-- preview card: thumbnail + title + choice of format/resolution -->
+  <div id="preview" class="preview">
+    <div class="prev-card">
+      <img id="thumb" class="thumb" alt="thumbnail">
+      <div class="prev-body">
+        <div class="prev-title" id="ptitle"></div>
+        <div class="prev-meta" id="pmeta"></div>
+        <div id="pchoices"></div>
+        <button id="getbtn" class="btn" onclick="startDownload()">⬇ Download</button>
+      </div>
+    </div>
+  </div>
 
   <div id="result" class="result">
     <div class="pres" id="pres"></div>
     <div class="actions">
       <a id="dl" href="#" download target="_blank" rel="noopener">⬇ Download file</a>
       <button class="cp" onclick="copyResult()">Copy URL</button>
+      <button class="db" onclick="openDebug()">Debug</button>
     </div>
   </div>
 
-  <div id="list" class="list">
-    <div class="card" style="margin-bottom:10px">
-      <label>Batch results</label>
-    </div>
-    <div id="items"></div>
-  </div>
+  <div id="list" class="list"><div id="items"></div></div>
 
-  <footer>
-    Progressive Web App — <span id="apiname"></span>
-  </footer>
+  <details class="adv">
+    <summary>Advanced — instance &amp; diagnostics</summary>
+    <label for="inst">Custom Cobalt API instance (base URL)</label>
+    <input id="inst" type="url" placeholder="https://your-instance.example (untuk platform selain YouTube)">
+    <div class="badges" id="badges"></div>
+    <div class="hint" style="margin-top:8px">
+      Instance Cobalt publik hampir semuanya mati/berbayar. Self-host sendiri lalu tempel URL-nya di
+      sini — lihat <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener">imputnet/cobalt</a>.
+      YouTube tetap jalan via Piped tanpa setup.
+      <a href="#" onclick="checkInstances();return false;">Test semua instance</a>
+    </div>
+  </details>
+
+  <footer><a href="#" onclick="openDebug();return false">Debug log</a></footer>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="modal" class="modal">
+  <div class="box">
+    <div class="hd"><b>Diagnostics / Debug log</b><button onclick="closeDebug()">Close</button></div>
+    <div class="body" id="dlog"></div>
+    <div class="ctl">
+      <button onclick="checkInstances()">Re-test instances</button>
+      <button onclick="copyDebug()">Copy log</button>
+      <button onclick="clearDebug()">Clear</button>
+    </div>
+  </div>
 </div>
 
 <script>
 "use strict";
-// Cobalt API backend instances (CORS-enabled). Tried in order; first that
-// responds wins. You can extend this list with your own self-hosted instance.
-var INSTANCES = [
-  { name: "cobalt.tools", url: "https://api.downloader.mispy.me" },
-  { name: "cobalt misc",   url: "https://cobalt-api.kwiatekmiki.com" },
-  { name: "cobalt.tools", url: "https://api.cobalt.tools" }
+/*
+ * All In One Download
+ * Alur: tempel URL -> deteksi platform -> tampilkan thumbnail + pilihan
+ * (foto/video/resolusi) -> unduh.
+ * Backend: Piped API untuk YouTube (out of the box), Cobalt v10 untuk lainnya.
+ */
+var PIPED = [
+  { name: "piped private.coffee", api: "https://api.piped.private.coffee" },
+  { name: "piped kavin.rocks",    api: "https://pipedapi.kavin.rocks" }
 ];
+var COBALT = []; // add {name,url} for your own instance
+var CUSTOM = (function(){try{return localStorage.getItem('aiod-inst')||''}catch(e){return ''}})();
 
-var goBtn = document.getElementById('go');
-var statusEl = document.getElementById('status');
-var resultEl = document.getElementById('result');
-var listEl = document.getElementById('list');
+var goBtn=null;
+var statusEl=document.getElementById('status');
+var resultEl=document.getElementById('result');
+var listEl=document.getElementById('list');
+var previewEl=document.getElementById('preview');
+var logEls=[];
+var state={ url:null, platform:null, pipedData:null, choice:null, cobaltCustom:false };
 
-function setStatus(msg, kind, spin){
-  statusEl.className = 'status show ' + (kind||'wait');
-  statusEl.innerHTML = (spin?'<span class="spinner"></span>':'') + escapeHtml(msg);
-  if(kind==='ok'||kind==='err') resultEl.classList.remove('show');
+function log(kind,msg){ logEls.push({t:new Date().toLocaleTimeString(),k:kind,m:String(msg)}); }
+function setStatus(msg,kind,spin){
+  statusEl.className='status show '+(kind||'wait');
+  statusEl.innerHTML=(spin?'<span class="spinner"></span>':'')+escapeHtml(msg);
+  if(kind==='err') resultEl.classList.remove('show');
 }
 function clearStatus(){ statusEl.className='status'; }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function flash(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(function(){t.classList.remove('show')},1800); }
 
-function extractLinks(){
+function lastLink(){
   var raw=document.getElementById('links').value;
-  var m=raw.match(/https?:\/\/[^\s,]+/g)||[];
-  // trim trailing punctuation
-  return m.map(function(u){return u.replace(/[),.;!?]+$/,'');});
+  var m=raw.match(/https?:\/\/[^\s,]+/g);
+  return m?m[m.length-1].replace(/[),.;!?]+$/,''):null;
 }
 
-async function tryInstance(inst, payload){
-  var ctrl=new AbortController();
-  var to=setTimeout(function(){ctrl.abort();},20000);
+function ytId(url){
   try{
-    var res=await fetch(inst.url+'/api/json',{
-      method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify(payload)
-    });
-    clearTimeout(to);
-    if(!res.ok){ var t=await res.text().catch(function(){return '';}); throw new Error('HTTP '+res.status+' '+(t||'').slice(0,120)); }
-    return await res.json();
-  }catch(e){ clearTimeout(to); throw e; }
-}
-
-async function getJson(url, payload){
-  var lastErr=null;
-  for(var i=0;i<INSTANCES.length;i++){
-    try{
-      return await tryInstance(INSTANCES[i],payload);
-    }catch(e){ lastErr=e; console.warn(INSTANCES[i].name,'failed',e); }
-  }
-  throw lastErr||new Error('All API instances failed');
-}
-
-async function one(url, fmt){
-  var payload={url:url};
-  if(fmt==='mp4') payload.downloadMode='video';
-  else if(fmt==='mp3') payload.downloadMode='audio';
-  else if(fmt==='webm') payload.downloadMode='video'; // keep webm; client may re-process
-  var j=await getJson(url,payload);
-  if(!j || (!j.url && !j.status)) throw new Error('Unexpected API response');
-  if(j.url) return {url:j.url, filename:j.filename||null, title:j.title||null};
-  if(j.status==='redirect') return {url:j.url||j.redirect||'', filename:j.filename||null};
-  throw new Error('API did not return a download URL');
-}
-
-async function start(){
-  var links=extractLinks();
-  if(!links.length){ setStatus('Paste at least one valid link.','err'); return; }
-  var fmt=document.getElementById('format').value;
-  goBtn.disabled=true; resultEl.classList.remove('show'); listEl.classList.remove('show');
-  document.getElementById('items').innerHTML='';
-  setStatus('Processing '+links.length+' link(s)...','wait',true);
-
-  var results=[];
-  for(var i=0;i<links.length;i++){
-    setStatus('('+(i+1)+'/'+links.length+') Fetching '+links[i],'wait',true);
-    try{
-      var r=await one(links[i],fmt);
-      r.input=links[i];
-      results.push(r);
-    }catch(e){
-      setStatus('Failed: '+links[i]+' — '+e.message,'err');
-      console.error(e);
+    var u=new URL(url);
+    var v=u.searchParams.get('v'); if(v) return v;
+    var h=u.hostname;
+    if(/youtube\.com|youtu\.be/i.test(url)){
+      var p=u.pathname;
+      var parts=p.split('/').filter(Boolean);
+      if(parts.length>=2 && /^(shorts|embed|live)$/.test(parts[0])) return parts[1];
+      if(/youtu\.be/.test(h)) return parts[0]||null;
     }
-  }
-  goBtn.disabled=false;
-  if(!results.length){ return; }
-
-  if(results.length===1){
-    var r0=results[0];
-    var url=r0.url;
-    // only set download attr for same-origin/blob; cross-origin download uses blob proxy note
-    var dl=document.getElementById('dl');
-    dl.href=url;
-    dl.setAttribute('download', r0.filename||'video');
-    // cross-origin: fetch via proxy-ish (cobalt returns CORS-enabled URL so direct fetch works)
-    try{
-      var blob=await (await fetch(url)).blob();
-      dl.href=URL.createObjectURL(blob);
-    }catch(e){ /* keep raw URL; anchor opens in new tab */ }
-    document.getElementById('pres').textContent=(r0.title?('Title: '+r0.title+'\n'):'')+url;
-    resultEl.classList.add('show');
-    setStatus('Done!','ok');
-  } else {
-    listEl.classList.add('show');
-    renderList(results);
-    setStatus(results.length+'/'+links.length+' ready','ok');
-  }
+  }catch(e){}
+  var m=url.match(/(?:youtu\.be\/|shorts\/|embed\/|live\/|\bv=)([A-Za-z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+function platformOf(url){
+  if(/youtube\.com|youtu\.be/i.test(url)) return 'youtube';
+  if(/tiktok\.com/i.test(url)) return 'tiktok';
+  if(/instagram\.com/i.test(url)) return 'instagram';
+  if(/twitter\.com|x\.com/i.test(url)) return 'twitter';
+  if(/reddit\.com/i.test(url)) return 'reddit';
+  return 'other';
 }
 
-function renderList(results){
-  var box=document.getElementById('items'); box.innerHTML='';
-  results.forEach(function(r){
-    var it=document.createElement('div'); it.className='item';
-    var m=document.createElement('div'); m.className='meta';
-    var t=document.createElement('div'); t.className='t'; t.textContent=(r.title||r.filename||r.input);
-    var d=document.createElement('div'); d.className='d'; d.textContent=r.input;
-    m.appendChild(t); m.appendChild(d);
-    var a=document.createElement('a'); a.textContent='⬇'; a.href=r.url; a.target='_blank'; a.rel='noopener';
-    a.setAttribute('download',r.filename||'video');
-    it.appendChild(m); it.appendChild(a);
-    box.appendChild(it);
+function cobaltInstances(){
+  var arr=[];
+  if(CUSTOM) arr.push({name:'custom',url:CUSTOM.replace(/\/+$/,'')});
+  return arr.concat(COBALT);
+}
+document.getElementById('inst').value=CUSTOM;
+document.getElementById('inst').addEventListener('input',function(){
+  CUSTOM=this.value.trim().replace(/\/+$/,'');
+  try{localStorage.setItem('aiod-inst',CUSTOM)}catch(e){}
+  renderBadges();
+});
+function renderBadges(){
+  var b=document.getElementById('badges'); b.innerHTML='';
+  cobaltInstances().concat(PIPED.map(function(p){return {name:p.name,url:p.api};})).forEach(function(i){
+    var s=document.createElement('span'); s.className='badge'; s.textContent=i.name+' · '+i.url; b.appendChild(s);
   });
+  if(!cobaltInstances().length&&!PIPED.length){ var s=document.createElement('span'); s.className='badge err'; s.textContent='no instance'; b.appendChild(s); }
 }
 
+async function fetchJson(url,opts){
+  var ctrl=new AbortController(); var to=setTimeout(function(){ctrl.abort()},25000);
+  try{ var res=await fetch(url,Object.assign({signal:ctrl.signal},opts||{}));
+    if(!res.ok){ var t=await res.text().catch(function(){return '';}); throw new Error('HTTP '+res.status+' '+(t||'').slice(0,140)); }
+    return await res.json();
+  } finally { clearTimeout(to); }
+}
+
+/* ---------- Piped (YouTube) ---------- */
+async function pipedStreams(id, inst){
+  return await fetchJson(inst.api+'/streams/'+id);
+}
+function pickNum(x,kind){
+  if(kind==='video'){ var m=String(x.height||x.quality||'').match(/(\d{3,4})/); return m?parseInt(m[1],10):0; }
+  return Number(x.bitrate||0);
+}
+function isProxied(x){
+  var u=x.url||'';
+  return u.indexOf('/videoplayback')>=0 || u.indexOf('/watch?v=')>=0 || u.indexOf('/stream?')>=0 || u.indexOf('/api/v1/streams/')>=0;
+}
+function sortStreams(list,kind,reverse){
+  var arr=list.slice().map(function(x){return {x:x,q:pickNum(x,kind),mp4:(x.mimeType||'').indexOf('/mp4')===0};});
+  arr.sort(function(a,b){
+    if(reverse){ if(b.mp4!==a.mp4) return b.mp4?-1:1; }
+    else { if(a.mp4!==b.mp4) return a.mp4?-1:1; }
+    return (reverse?-1:1)*(b.q-a.q);
+  });
+  return arr.map(function(o){return o.x;});
+}
+var PQ=[4320,2160,1440,1080,720,480,360,240,144];
+function nearest(u){ for(var i=0;i<PQ.length;i++) if(PQ[i]<=u) return PQ[i]; return 144; }
+
+async function detectYouTube(url){
+  var id=ytId(url); if(!id){ return {ok:false, err:'Could not parse YouTube video id'}; }
+  log('t','youtube id '+id+' via piped');
+  var last=null;
+  for(var i=0;i<PIPED.length;i++){
+    try{
+      var s=await pipedStreams(id, PIPED[i]); state.pipedData=s; state.pipedInst=PIPED[i];
+      return {ok:true}; // thumb & streams read in render
+    }catch(e){ last=e; log('e','piped '+PIPED[i].name+': '+e.message); }
+  }
+  return {ok:false, err: last?last.message:'All Piped instances failed'};
+}
+
+function renderChoices(){
+  var box=document.getElementById('pchoices'); box.innerHTML='';
+  var s=state.pipedData;
+  var vs=(s.videoStreams||[]).filter(function(x){return (x.mimeType||'').indexOf('video/')===0;});
+  var as=(s.audioStreams||[]).filter(function(x){return (x.mimeType||'').indexOf('audio/')===0;});
+  var hasMute=vs.length>0 && as.length>0;
+
+  function chip(lbl,sub,key,sel){
+    var d=document.createElement('div'); d.className='opt'+(sel?' sel':'');
+    var l=document.createElement('div'); l.className='lbl'; l.textContent=lbl;
+    var u=document.createElement('div'); u.className='sub'; u.textContent=sub||'';
+    d.appendChild(l); d.appendChild(u);
+    d.onclick=function(){ box.querySelectorAll('.opt').forEach(function(x){x.classList.remove('sel')}); d.classList.add('sel'); state.choice=key; updateGetBtn(); };
+    box.appendChild(d);
+  }
+
+  // Foto: YouTube tidak punya foto, tapi untuk IG/TikTok beberapa ada. Untuk youtube, tawarkan jika ada thumbnail-large only.
+  if(platformOf(state.url)==='youtube'){
+    // Only offer streams whose URL is directly downloadable via the Piped proxy
+    // (player.odycdn etc. is not CORS-friendly). Group unique proxied MP4 heights.
+    var proxVideo=vs.filter(function(x){return isProxied(x) && (x.mimeType||'').indexOf('video/')===0;});
+    var heights=sortStreams(proxVideo,'video',false).map(function(x){return pickNum(x,'video');}).filter(function(n){return n>0;});
+    var uniq=[]; heights.forEach(function(n){ if(uniq.indexOf(n)===-1) uniq.push(n); });
+    uniq.sort(function(a,b){return b-a;});
+    if(!uniq.length){ uniq=[0]; }
+    uniq.forEach(function(n){
+      chip(n? n+'p':'Best','mp4', {type:'video', height:n}, false);
+    });
+    if(as.length){ chip('MP3','audio only', {type:'audio', stream:null}, false); }
+    hasMute&&chip('Video no audio','mute', {type:'mute'}, false);
+    // default: highest proxied mp4 that is <=1080, else the best available
+    var def = uniq.filter(function(n){return n>0 && n<=1080;})[0] || uniq[0];
+    state.choice={type:'video',height:def};
+    // mark selection UI
+    var opts=box.querySelectorAll('.opt');
+    opts.forEach(function(o){ if(o.querySelector('.lbl').textContent===(def? def+'p':'Best')){ o.classList.add('sel'); } });
+  } else if(platformOf(state.url)==='instagram'){
+    // IG: foto vs carousel/video — via cobalt; offer generic photo/video
+    chip('Photo','image',{type:'photo',stream:null},true);
+    chip('Video','mp4',{type:'video',height:0,stream:null},false);
+  } else {
+    chip('Best','auto',{type:'auto',stream:null},true);
+    chip('MP3','audio',{type:'audio',stream:null},false);
+  }
+  updateGetBtn();
+}
+function updateGetBtn(){
+  var b=document.getElementById('getbtn');
+  b.disabled = !state.choice || !state.choice.type;
+  b.textContent = '⬇ Download '+(state.choice&&state.choice.height?(' '+state.choice.height+'p'):(state.choice&&state.choice.type==='mp3'?' MP3':''));
+}
+
+async function handleLink(){
+  var url=lastLink();
+  resultEl.classList.remove('show'); listEl.classList.remove('show'); previewEl.classList.remove('show');
+  clearStatus();
+  if(!url){ return; }
+  state.url=url; state.platform=platformOf(url); state.pipedData=null; state.choice=null;
+  log('t','detected '+state.platform+' :: '+url);
+  setStatus('Detecting '+url,'wait',true);
+
+  var d=await detectPlatform(url);
+  if(!d.ok){ setStatus('Could not detect: '+d.err,'err'); log('e','detect failed: '+d.err); return; }
+  setStatus('','');
+  if(d.thumb) document.getElementById('thumb').src=d.thumb; else document.getElementById('thumb').removeAttribute('src');
+  document.getElementById('ptitle').textContent=d.title||'';
+  document.getElementById('pmeta').textContent=d.meta||platformOf(url).toUpperCase();
+  renderChoices();
+  previewEl.classList.add('show');
+}
+async function detectPlatform(url){
+  if(state.platform==='youtube'){
+    var r=await detectYouTube(url);
+    if(!r.ok) return r;
+    var s=state.pipedData;
+    var thumb='';
+    if(s.thumbnailUrl) thumb=s.thumbnailUrl;
+    else if(s.thumbnails&&s.thumbnails.length) thumb=s.thumbnails.map(function(t){return t.url;}).pop();
+    var dur=s.duration&&s.duration>0? Math.floor(s.duration/60)+':'+('0'+(s.duration%60)).slice(-2) : '';
+    return {ok:true, thumb:thumb, title:s.title||ytId(url), meta:'YouTube · '+dur};
+  }
+  // non-YouTube: no reliable preview API; show generic card
+  var name=state.platform.charAt(0).toUpperCase()+state.platform.slice(1);
+  return {ok:true, thumb:'', title:url, meta:name+' — add a Cobalt instance to download'};
+}
+
+/* ---------- download ---------- */
+async function startDownload(){
+  var u=state.url, c=state.choice;
+  if(!u||!c){ setStatus('No link / no selection','err'); return; }
+  var btn=document.getElementById('getbtn'); btn.disabled=true;
+  setStatus('Preparing download...','wait',true);
+  try{
+    var r;
+    if(state.platform==='youtube'){
+      var s=state.pipedData;
+      if(c.type==='video'){
+        var prox=sortStreams(s.videoStreams.filter(function(x){return isProxied(x) && (x.mimeType||'').indexOf('video/')===0;}),'video',false);
+        var pick;
+        if(c.height){ pick=prox.find(function(x){return pickNum(x,'video')<=c.height && (x.mimeType||'').indexOf('mp4')>=0;})||prox.find(function(x){return pickNum(x,'video')<=c.height;}); }
+        if(!pick) pick=prox[0];
+        if(!pick) throw new Error('no downloadable video stream (no proxy)');
+        r={url:pick.url, filename:(s.title||'youtube')+'.mp4', direct:true};
+      } else if(c.type==='mp3'){
+        var as=sortStreams(s.audioStreams.filter(function(x){return (x.mimeType||'').indexOf('audio/')===0;}),'audio',false);
+        var a=as[0]; if(!a) throw new Error('no audio stream');
+        r={url:a.url, filename:(s.title||'youtube')+'.m4a', direct:true};
+      } else if(c.type==='mute'){
+        var vs2=sortStreams(s.videoStreams.filter(function(x){return isProxied(x) && (x.mimeType||'').indexOf('video/')===0;}),'video',false);
+        var v=vs2[0]; if(!v) throw new Error('no proxied video stream');
+        r={url:v.url, filename:(s.title||'youtube')+'.mp4', direct:true};
+      }
+    } else {
+      var inst=cobaltInstances();
+      if(!inst.length) throw new Error('Non-YouTube requires a Cobalt instance (Advanced).');
+      var fmt = c.type==='photo'?'auto':(c.type==='mp3'||c.type==='audio'?'audio':(c.type==='mute'?'mute':'auto'));
+      r=await cobaltOne(inst[0].url,u,fmt,c);
+    }
+    if(!r||!r.url) throw new Error('no download URL returned');
+    showResult(r);
+    setStatus('Done!','ok'); log('o','ready: '+r.url.slice(0,90));
+  }catch(e){ setStatus('Failed: '+e.message,'err'); log('e','download: '+e.message); }
+  finally{ btn.disabled=false; }
+}
+
+async function cobaltOne(base,url,fmt,c){
+  var payload={url:url, downloadMode:fmt||'auto', filenameStyle:'pretty'};
+  if(fmt==='audio'){ payload.audioFormat='mp3'; payload.audioBitrate='128'; }
+  if(fmt==='mute'){ payload.localProcessing='forced'; }
+  var j=await fetchJson(base.replace(/\/+$/,'')+'/',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+  log('t','cobalt resp: '+JSON.stringify(j).slice(0,240));
+  if(j.error) throw new Error((j.error.code||'error')+': '+(j.error.text||JSON.stringify(j.error)));
+  if(j.status==='tunnel'||j.status==='redirect') return {url:j.url, filename:j.filename||null, direct:true};
+  if(j.status==='picker') throw new Error('picker (multi-source) not supported yet');
+  if(j.status==='local-processing') throw new Error('local processing not supported');
+  throw new Error('unknown status '+(j.status||'none'));
+}
+
+function showResult(r){
+  var dl=document.getElementById('dl'); dl.href=r.url; dl.setAttribute('download',r.filename||'video');
+  document.getElementById('pres').textContent=(r.filename?('filename: '+r.filename+'\n'):'')+r.url;
+  resultEl.classList.add('show');
+}
 function copyResult(){
   var txt=document.getElementById('pres').textContent||'';
   var lastLine=(txt.split('\n').pop()||'').trim();
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(lastLine).then(function(){flash('Copied!');});}
-  else{ flash('Select & copy manually.'); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(lastLine).then(function(){flash('Copied!')});}
+  else flash('Select & copy manually.');
 }
-function flash(msg){ setStatus(msg,'ok'); }
 
-document.getElementById('links').addEventListener('input',clearStatus);
-document.getElementById('apiname').textContent='Powered by '+INSTANCES[0].name+' & open alternatives';
+document.getElementById('links').addEventListener('input', function(){ clearStatus(); });
+document.getElementById('links').addEventListener('change', handleLink);
+document.getElementById('links').addEventListener('paste', function(){ setTimeout(handleLink,50); });
+document.getElementById('links').addEventListener('keyup', function(e){ if(e.key==='Enter'){ e.preventDefault(); handleLink(); } });
+
+/* ---- debug ---- */
+function renderLog(){ var b=document.getElementById('dlog'); b.innerHTML='';
+  logEls.forEach(function(e){ var d=document.createElement('div'); d.className='line '+e.k; d.textContent='['+e.t+'] '+e.m; b.appendChild(d); });
+  if(!logEls.length){ var d=document.createElement('div'); d.className='line t'; d.textContent='No activity yet.'; b.appendChild(d); } }
+function openDebug(){ renderLog(); document.getElementById('modal').classList.add('show'); }
+function closeDebug(){ document.getElementById('modal').classList.remove('show'); }
+function clearDebug(){ logEls=[]; renderLog(); flash('Log cleared'); }
+function copyDebug(){ var txt=logEls.map(function(e){return '['+e.t+'] '+e.m;}).join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){flash('Log copied')});} else flash('Select & copy manually.'); }
+async function checkInstances(){
+  log('t','testing backends');
+  var all=cobaltInstances().map(function(i){return {name:i.name,url:i.url};}).concat(PIPED.map(function(p){return {name:p.name,url:p.api+'/healthcheck'};}));
+  setStatus('Testing '+all.length+' backend(s)...','wait',true);
+  for(var i=0;i<all.length;i++){ try{ var r=await fetch(all[i].url,{headers:{'Accept':'application/json'}}); log('o',all[i].name+' OK HTTP '+r.status); }catch(e){ log('e',all[i].name+' unreachable: '+e.message); } }
+  setStatus('Test done — see Debug log.','ok'); openDebug();
+}
+
+renderBadges(); log('t','app loaded');
 </script>
 </body>
 </html>
