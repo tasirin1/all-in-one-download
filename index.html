@@ -398,6 +398,22 @@ function renderChoices(){
     // mark selection UI
     var opts=box.querySelectorAll('.opt');
     opts.forEach(function(o){ if(o.querySelector('.lbl').textContent===(def? def+'p':'Best')){ o.classList.add('sel'); } });
+  } else if(platformOf(state.url)==='tiktok'){
+    if(!(state.tikData||[]).length){ var nd=document.createElement('div'); nd.className='hint'; nd.textContent='No media extracted from this TikTok.'; box.appendChild(nd); state.choice=null; updateGetBtn(); return; }
+    var first=state.tikData[0];
+    if(first.type==='photo'){
+      state.tikData.forEach(function(it,i){ chip(it.lbl||('Photo '+(i+1)),'image',{type:'photo',item:it},i===0); });
+    } else {
+      chip('HD video','mp4',{type:'video',url:first.hd||first.url},true);
+      chip('Standard','mp4',{type:'video',url:first.url},false);
+    }
+    if(state.tikAudio){ chip('MP3','audio track',{type:'mp3'},false); }
+    // set default selection (HD video pertama jika ada, atau photo pertama)
+    if(!state.choice && state.tikData.length){
+      var d0=state.tikData[0];
+      state.choice = d0.type==='photo' ? {type:'photo',item:d0} : {type:'video',url:d0.hd||d0.url};
+      var o0=box.querySelector('.opt'); if(o0) o0.classList.add('sel');
+    }
   } else if(platformOf(state.url)==='instagram'){
     // IG: foto vs carousel/video — via cobalt; offer generic photo/video
     chip('Photo','image',{type:'photo',stream:null},true);
@@ -424,7 +440,7 @@ async function handleLink(){
   resultEl.classList.remove('show'); listEl.classList.remove('show'); previewEl.classList.remove('show');
   clearStatus();
   if(!url){ return; }
-  state.url=url; state.platform=platformOf(url); state.pipedData=null; state.choice=null;
+  state.url=url; state.platform=platformOf(url); state.pipedData=null; state.tikData=null; state.tikAudio=null; state.tikVideo=null; state.tikImages=null; state.choice=null;
   log('t','detected '+state.platform+' :: '+url);
   setStatus('Detecting '+url,'wait',true);
 
@@ -447,9 +463,43 @@ async function detectPlatform(url){
     if(state.streamErr) sub.push('streams blocked, retrying…');
     return {ok:true, thumb:m.thumb||'', title:m.title||ytId(url), meta:'YouTube · '+sub.join(' · ')};
   }
-  // non-YouTube: no reliable preview API; show generic card
+  if(state.platform==='tiktok'){
+    var t=await detectTikTok(url);
+    if(!t.ok) return t;
+    return t;
+  }
+  // lainnya: belum ada ekstraktor lintas-origin yang andal; kartu generik
   var name=state.platform.charAt(0).toUpperCase()+state.platform.slice(1);
   return {ok:true, thumb:'', title:url, meta:name+' — add a Cobalt instance to download'};
+}
+
+// TikTok via tikwm.com (resolve langsung dari browser; IP residential tidak diblokir).
+// Pola dari Vette1123/social-media-downloader (resolve di browser, CDN URL CORS *).
+var TIKWM='https://www.tikwm.com/api/';
+async function detectTikTok(url){
+  state.tikData=null;
+  var body=new URLSearchParams({url:url, hd:'1'});
+  var j;
+  try{ j=await fetchJson(TIKWM,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body}); }
+  catch(e){ log('e','tikwm fetch: '+e.message); return {ok:false, err:'TikTok resolve failed: '+e.message}; }
+  log('t','tikwm code='+j.code+' msg='+j.msg);
+  if(j.code!==0 || !j.data){ return {ok:false, err:'TikTok blocked / failed: '+(j.msg||'no data')}; }
+  var d=j.data;
+  var thumb=d.cover||d.origin_cover||'';
+  var author=d.author? (d.author.nickname||d.author.unique_id||'') : '';
+  var dur=d.duration? Math.floor(d.duration/60)+':'+('0'+(d.duration%60)).slice(-2) : '';
+  var title=d.title||d.author?.nickname||'TikTok';
+  var items=[];
+  if(d.images && d.images.length){ items=d.images.map(function(u,i){return {type:'photo',url:u,lbl:'Photo '+(i+1)};}); }
+  else if(d.play||d.hdplay){ items.push({type:'video',url:d.hdplay||d.play,hd:d.hdplay||null}); }
+  if(d.play) state.tikVideo=(d.hdplay||d.play);
+  if(d.music) state.tikAudio=d.music;
+  if(d.images) state.tikImages=d.images;
+  state.tikData=items;
+  state.tikTitle=title;
+  if(!items.length) return {ok:false, err:'TikTok: no media found'};
+  var sub=[author||'TikTok']; if(dur) sub.push(dur); if(d.images) sub.push(d.images.length+' photos');
+  return {ok:true, thumb:thumb, title:title, meta:'TikTok · '+sub.join(' · ')};
 }
 
 /* ---------- download ---------- */
@@ -478,9 +528,14 @@ async function startDownload(){
         var v=vs2[0]; if(!v) throw new Error('no proxied video stream');
         r={url:v.url, filename:(s.title||'youtube')+'.mp4', direct:true};
       }
+    } else if(state.platform==='tiktok'){
+      if(c.type==='video'&&c.url){ r={url:c.url, filename:state.tikTitle+'.mp4'}; }
+      else if(c.type==='photo'&&c.item){ r={url:c.item.url, filename:state.tikTitle+'.jpg'}; }
+      else if(c.type==='mp3'){ r={url:state.tikAudio, filename:state.tikTitle+'.mp3'}; }
+      else { var inst=cobaltInstances(); if(!inst.length){ throw new Error('Pilih MP4/MP3, atau tambah Cobalt instance untuk mode lain (Advanced).'); } r=await cobaltOne(inst[0].url,u,'auto',c); }
     } else {
       var inst=cobaltInstances();
-      if(!inst.length) throw new Error('Non-YouTube requires a Cobalt instance (Advanced).');
+      if(!inst.length) throw new Error('Non-YouTube memerlukan Cobalt instance (Advanced).');
       var fmt = c.type==='photo'?'auto':(c.type==='mp3'||c.type==='audio'?'audio':(c.type==='mute'?'mute':'auto'));
       r=await cobaltOne(inst[0].url,u,fmt,c);
     }

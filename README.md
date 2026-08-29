@@ -47,6 +47,20 @@ The site catches errors automatically (global JS errors, unhandled promise rejec
 
 > ⚠️ Security: a browser-side PAT can be seen by anyone using the site and restricted to Issues-write on this repo reduces—but does not eliminate—risk. For a public site you may prefer the manual Report button only; remove `auto` reporting by not saving a token.
 
+## How downloads resolve (per platform)
+Approach inspired by [Vette1123/social-media-downloader](https://github.com/Vette1123/social-media-downloader):
+
+| Platform | Source | Notes |
+|---|---|---|
+| TikTok | **tikwm.com** resolved **from the browser** (residential IP, CORS `*`) | rich result: HD/SD mp4, MP3 (music), photo carousels; falls back to Cobalt |
+| YouTube | oEmbed (metadata) + Piped proxy streams | falls back to Cobalt if configured |
+| Others (IG/X/Reddit/...) | Cobalt instance (self-host) | paste your instance URL in Advanced |
+
+The browser-first pattern mirrors the reference project: TikTok's CDN URLs answer
+cross-origin with `Access-Control-Allow-Origin: *`, so the visitor's own browser
+fetches them directly — no server bytes, accurate progress, and no cobalt/cobalt
+dependency for TikTok.
+
 ## Self-host backends
 - **Cobalt**: `docker run ghcr.io/imputnet/cobalt:latest` (see [docs/run-an-instance.md](https://github.com/imputnet/cobalt/blob/main/docs/run-an-instance.md)) — then paste `https://your-host` in Advanced (leave `/` off).
 - **Piped**: [TeamPiped/Piped](https://github.com/TeamPiped/Piped) — set `PIPED` in `index.html`.
