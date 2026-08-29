@@ -41,6 +41,11 @@
   .row button.ghost{background:var(--panel2);border:1px solid var(--border);color:var(--text);flex:0 0 auto}
   .hint{font-size:12px;color:var(--muted);margin-top:8px}
   .hint code{background:var(--panel2);padding:1px 6px;border-radius:6px}
+  .adv details.guide{margin-top:10px;border:1px dashed var(--border);border-radius:10px;padding:10px 12px}
+  .adv details.guide summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)}
+  .adv details.guide ol{margin:10px 0 0;padding-left:18px;font-size:12.5px;color:var(--text)}
+  .adv details.guide li{margin-bottom:6px}
+  .adv details.guide code{background:var(--panel2);padding:1px 6px;border-radius:6px;font-size:12px}
   .status{padding:12px 14px;border-radius:10px;margin-top:12px;display:none;font-size:14px;white-space:pre-wrap}
   .status.show{display:block}
   .status.err{background:rgba(255,92,102,.12);border:1px solid rgba(255,92,102,.4);color:var(--err)}
@@ -170,6 +175,25 @@
       sini — lihat <a href="https://github.com/imputnet/cobalt" target="_blank" rel="noopener">imputnet/cobalt</a>.
       YouTube tetap jalan via Piped tanpa setup.
       <a href="#" onclick="checkInstances();return false;">Test semua instance</a>
+    </div>
+    <details class="guide">
+      <summary>Cara deploy Cobalt sendiri — Render, gratis, tanpa kartu (5 menit)</summary>
+      <ol class="guide-steps">
+        <li>Buka <a href="https://dashboard.render.com" target="_blank" rel="noopener">dashboard.render.com</a> → <b>New → Web Service</b>.</li>
+        <li>Pilih <b>"Deploy an existing image"</b> lalu isi <code>ghcr.io/imputnet/cobalt:11</code>.</li>
+        <li>Instance type: <b>Free</b>. Region: <b>Frankfurt</b>.</li>
+        <li>Environment variables: <code>API_PORT</code> = <code>10000</code> dan <code>API_URL</code> = <code>https://&lt;nama-service&gt;.onrender.com/</code> (wajib slash di akhir; isi setelah deploy pertama lalu redeploy).</li>
+        <li>Create Web Service → tunggu <i>Live</i>. Cek <code>curl https://&lt;nama-service&gt;.onrender.com/</code> — harus mengembalikan JSON Cobalt.</li>
+        <li>Kembali ke sini: tempel <code>https://&lt;nama-service&gt;.onrender.com</code> di kolom di atas, lalu Kirim.</li>
+      </ol>
+      <div class="hint">
+        Render gratis tidur setelah 15 menit idle (bangun butuh 30–60 detik). Jaga tetap hangat dengan
+        <a href="https://uptimerobot.com" target="_blank" rel="noopener">UptimeRobot</a> atau
+        <a href="https://cron-job.org" target="_blank" rel="noopener">cron-job.org</a> memanggil
+        <code>https://&lt;nama-service&gt;.onrender.com/</code> tiap ~14 menit. Panduan lengkap:
+        <a href="https://github.com/tasirin1/all-in-one-download/blob/main/deploy/cobalt/README.md" target="_blank" rel="noopener">deploy/cobalt/README.md</a>.
+      </div>
+    </details>
     </div>
   </details>
 
@@ -421,7 +445,7 @@ function renderChoices(){
     }
   } else if(platformOf(state.url)==='instagram'){
     var n=document.createElement('div'); n.className='hint';
-    n.innerHTML='Instagram memblokir ekstraksi anonim. Set <b>Cobalt instance</b> di <b>Advanced</b> agar video/foto IG bisa diunduh.';
+    n.innerHTML='Instagram memblokir ekstraksi anonim — unduh butuh <b>Cobalt instance</b> self-host. Buka <b>Advanced</b> → <i>Cara deploy Cobalt sendiri (Render)</i> lalu tempel URL-nya di kolom instance.';
     box.appendChild(n);
     chip('Photo','image',{type:'photo',stream:null},true);
     chip('Video','mp4',{type:'video',height:0,stream:null},false);
@@ -548,7 +572,7 @@ async function startDownload(){
       else { var inst=cobaltInstances(); if(!inst.length){ throw new Error('Pilih MP4/MP3, atau tambah Cobalt instance untuk mode lain (Advanced).'); } r=await cobaltOne(inst[0].url,u,'auto',c); }
     } else {
       var inst=cobaltInstances();
-      if(!inst.length) throw new Error('Platform ini butuh Cobalt instance. Buka Advanced → tempel URL instance (self-host) → Kirim lagi.');
+      if(!inst.length) throw new Error('Platform ini butuh Cobalt instance self-host. Buka Advanced → Cara deploy Cobalt sendiri (Render) → tempel URL instance → Kirim lagi.');
       var fmt = c.type==='photo'?'auto':(c.type==='mp3'||c.type==='audio'?'audio':(c.type==='mute'?'mute':'auto'));
       r=await cobaltOne(inst[0].url,u,fmt,c);
     }

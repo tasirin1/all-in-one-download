@@ -54,7 +54,7 @@ Approach inspired by [Vette1123/social-media-downloader](https://github.com/Vett
 |---|---|---|
 | TikTok | **tikwm.com** resolved **from the browser** (residential IP, CORS `*`) | rich result: HD/SD mp4, MP3 (music), photo carousels; falls back to Cobalt |
 | YouTube | oEmbed (metadata) + Piped proxy streams | falls back to Cobalt if configured |
-| Others (IG/X/Reddit/...) | Cobalt instance (self-host) | paste your instance URL in Advanced |
+| Others (IG/X/Reddit/...) | Cobalt instance (self-host) | paste your instance URL in Advanced; free Render deploy guide in [`deploy/cobalt/README.md`](deploy/cobalt/README.md) |
 
 The browser-first pattern mirrors the reference project: TikTok's CDN URLs answer
 cross-origin with `Access-Control-Allow-Origin: *`, so the visitor's own browser
@@ -62,7 +62,7 @@ fetches them directly — no server bytes, accurate progress, and no cobalt/coba
 dependency for TikTok.
 
 ## Self-host backends
-- **Cobalt**: `docker run ghcr.io/imputnet/cobalt:latest` (see [docs/run-an-instance.md](https://github.com/imputnet/cobalt/blob/main/docs/run-an-instance.md)) — then paste `https://your-host` in Advanced (leave `/` off).
+- **Cobalt**: `docker run ghcr.io/imputnet/cobalt:latest` (see [docs/run-an-instance.md](https://github.com/imputnet/cobalt/blob/main/docs/run-an-instance.md)) — then paste `https://your-host` in Advanced (leave `/` off). For a **free, no-credit-card Render deploy** (5 min), follow [`deploy/cobalt/README.md`](deploy/cobalt/README.md).
 - **Piped**: [TeamPiped/Piped](https://github.com/TeamPiped/Piped) — set `PIPED` in `index.html`.
 
 ## Run locally
