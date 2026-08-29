@@ -420,7 +420,9 @@ function renderChoices(){
       var o0=box.querySelector('.opt'); if(o0) o0.classList.add('sel');
     }
   } else if(platformOf(state.url)==='instagram'){
-    // IG: foto vs carousel/video — via cobalt; offer generic photo/video
+    var n=document.createElement('div'); n.className='hint';
+    n.innerHTML='Instagram memblokir ekstraksi anonim. Set <b>Cobalt instance</b> di <b>Advanced</b> agar video/foto IG bisa diunduh.';
+    box.appendChild(n);
     chip('Photo','image',{type:'photo',stream:null},true);
     chip('Video','mp4',{type:'video',height:0,stream:null},false);
   } else {
@@ -440,12 +442,17 @@ function updateGetBtn(){
   }
 }
 
-async function handleLink(){
+async function handleLink(force){
+  if(state.detecting){ return; }            // jangan tumpuk deteksi paralel
   var url=lastLink();
+  if(!force && state.url===url && (previewEl.classList.contains('show')||resultEl.classList.contains('show'))){
+    return;                                  // URL sama & sudah diproses -> skip
+  }
   resultEl.classList.remove('show'); listEl.classList.remove('show'); previewEl.classList.remove('show');
   clearStatus();
   if(!url){ return; }
-  state.url=url; state.platform=platformOf(url); state.pipedData=null; state.tikData=null; state.tikAudio=null; state.tikVideo=null; state.tikImages=null; state.choice=null;
+  state.detecting=true;
+  try{ state.url=url; state.platform=platformOf(url); state.pipedData=null; state.tikData=null; state.tikAudio=null; state.tikVideo=null; state.tikImages=null; state.choice=null;
   log('t','detected '+state.platform+' :: '+url);
   setStatus('Detecting '+url,'wait',true);
 
@@ -457,6 +464,7 @@ async function handleLink(){
   document.getElementById('pmeta').textContent=d.meta||platformOf(url).toUpperCase();
   renderChoices();
   previewEl.classList.add('show');
+  } finally { state.detecting=false; }
 }
 async function detectPlatform(url){
   if(state.platform==='youtube'){
@@ -540,7 +548,7 @@ async function startDownload(){
       else { var inst=cobaltInstances(); if(!inst.length){ throw new Error('Pilih MP4/MP3, atau tambah Cobalt instance untuk mode lain (Advanced).'); } r=await cobaltOne(inst[0].url,u,'auto',c); }
     } else {
       var inst=cobaltInstances();
-      if(!inst.length) throw new Error('Non-YouTube memerlukan Cobalt instance (Advanced).');
+      if(!inst.length) throw new Error('Platform ini butuh Cobalt instance. Buka Advanced → tempel URL instance (self-host) → Kirim lagi.');
       var fmt = c.type==='photo'?'auto':(c.type==='mp3'||c.type==='audio'?'audio':(c.type==='mute'?'mute':'auto'));
       r=await cobaltOne(inst[0].url,u,fmt,c);
     }
@@ -576,9 +584,12 @@ function copyResult(){
   else flash('Select & copy manually.');
 }
 
-function sendLink(){
-  clearStatus(); handleLink();
+var detectTimer=null;
+function requestDetect(force){
+  clearTimeout(detectTimer);
+  detectTimer=setTimeout(function(){ handleLink(force||false); }, force?0:300);
 }
+function sendLink(){ clearStatus(); requestDetect(true); }
 function clearAll(){
   document.getElementById('links').value='';
   resultEl.classList.remove('show'); listEl.classList.remove('show'); previewEl.classList.remove('show');
@@ -587,9 +598,9 @@ function clearAll(){
   document.getElementById('links').focus();
 }
 document.getElementById('links').addEventListener('input', function(){ clearStatus(); });
-document.getElementById('links').addEventListener('change', handleLink);
-document.getElementById('links').addEventListener('paste', function(){ setTimeout(handleLink,50); });
-document.getElementById('links').addEventListener('keyup', function(e){ if(e.key==='Enter'){ e.preventDefault(); handleLink(); } });
+document.getElementById('links').addEventListener('change', function(){ requestDetect(); });
+document.getElementById('links').addEventListener('paste', function(){ requestDetect(); });
+document.getElementById('links').addEventListener('keyup', function(e){ if(e.key==='Enter'){ e.preventDefault(); requestDetect(true); } });
 
 /* ---- debug ---- */
 function renderLog(){ var b=document.getElementById('dlog'); b.innerHTML='';
