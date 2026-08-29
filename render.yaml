@@ -1,0 +1,17 @@
+# Render Blueprint for a self-hosted cobalt API instance.
+# One-click deploy: https://render.com/deploy?repo=https://github.com/tasirin1/all-in-one-download
+# Then paste https://cobalt.onrender.com into the site's Advanced -> Custom Cobalt API instance.
+services:
+  - type: web
+    name: cobalt
+    runtime: image
+    plan: free
+    region: frankfurt
+    image:
+      url: ghcr.io/imputnet/cobalt:11
+    healthCheckPath: /
+    envVars:
+      - key: API_PORT
+        value: "10000"
+      - key: API_URL
+        value: https://cobalt.onrender.com/

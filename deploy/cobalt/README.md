@@ -13,6 +13,25 @@ publik secara anonim dari sisi server, lalu men-tunnel byte-nya ke browser kamu.
 
 ## Opsi A — Render (gratis, tanpa kartu) ✅ rekomendasi
 
+### Cara termudah — tombol deploy 1 klik
+
+Repo ini sudah punya **Render Blueprint** (`render.yaml`) yang mendefinisikan
+Web Service image `ghcr.io/imputnet/cobalt:11` lengkap dengan env-nya. Cukup:
+
+1. Klik **Deploy to Render**:
+   [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/tasirin1/all-in-one-download)
+2. Login/signup Render (gratis, tanpa kartu) → pilih service **cobalt** → isi
+   nama yang sama (`cobalt`) → **Create Web Service**.
+3. Tunggu status **Live** → tempel `https://cobalt.onrender.com` di situs
+   (Advanced → Custom Cobalt API instance) → Kirim.
+
+> Kalau nama `cobalt` sudah terpakai, Render menambah suffix acak — sesuaikan
+> field `API_URL` di dashboard (Settings → Environment) dengan URL asli service
+> kamu (wajib slash di akhir), lalu Redeploy.
+
+Apabila ingin form manual (tanpa blueprint), ikuti langkah di bawah.
+
+
 Render bisa menjalankan image Cobalt resmi langsung; tier gratisnya tidak
 perlu kartu kredit.
 
