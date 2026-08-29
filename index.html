@@ -256,7 +256,7 @@ var resultEl=document.getElementById('result');
 var listEl=document.getElementById('list');
 var previewEl=document.getElementById('preview');
 var logEls=[];
-var state={ url:null, platform:null, pipedData:null, choice:null, cobaltCustom:false };
+var state={ url:null, platform:null, pipedData:null, choice:null, cobaltCustom:false, pendingRetry:false };
 
 function log(kind,msg){ logEls.push({t:new Date().toLocaleTimeString(),k:kind,m:String(msg)}); }
 function setStatus(msg,kind,spin){
@@ -378,6 +378,7 @@ async function detectYouTube(url){
   // auto retry sekali: blokir anonim YouTube biasanya temporer (1-2 menit)
   if(isBlockErr(last&&last.message) && autoRetried<2){
     autoRetried++;
+    state.pendingRetry=true;
     log('w','YouTube blocked anonymous access — auto retry in 15s ('+autoRetried+'/2)');
     setTimeout(function(){
       var cur=lastLink();
@@ -473,14 +474,14 @@ function updateGetBtn(){
 async function handleLink(force){
   if(state.detecting){ return; }            // jangan tumpuk deteksi paralel
   var url=lastLink();
-  if(!force && state.url===url && (previewEl.classList.contains('show')||resultEl.classList.contains('show'))){
-    return;                                  // URL sama & sudah diproses -> skip
+  if(state.url===url && (previewEl.classList.contains('show')||resultEl.classList.contains('show')) && !(force && state.pendingRetry)){
+    return;                                  // URL sama & sudah diproses -> skip (kecuali retry YT tertunda)
   }
   resultEl.classList.remove('show'); listEl.classList.remove('show'); previewEl.classList.remove('show');
   clearStatus();
   if(!url){ return; }
   state.detecting=true;
-  try{ state.url=url; state.platform=platformOf(url); state.pipedData=null; state.tikData=null; state.tikAudio=null; state.tikVideo=null; state.tikImages=null; state.choice=null;
+  try{ state.pendingRetry=false; state.url=url; state.platform=platformOf(url); state.pipedData=null; state.tikData=null; state.tikAudio=null; state.tikVideo=null; state.tikImages=null; state.choice=null;
   log('t','detected '+state.platform+' :: '+url);
   setStatus('Detecting '+url,'wait',true);
 
